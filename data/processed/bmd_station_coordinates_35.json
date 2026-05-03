@@ -1,0 +1,218 @@
+{
+  "coordinate_system": "WGS84 decimal degrees",
+  "source_workbook": "data/raw/ground/Four Years data (2021 to 2024) 4 paramters.xlsx",
+  "source_sheet": "Wind",
+  "station_count": 35,
+  "stations": [
+    {
+      "station_name": "Dhaka",
+      "station_id": "dhaka",
+      "latitude": 23.766667,
+      "longitude": 90.383333
+    },
+    {
+      "station_name": "Tangail",
+      "station_id": "tangail",
+      "latitude": 24.25,
+      "longitude": 89.916667
+    },
+    {
+      "station_name": "Mymensingh",
+      "station_id": "mymensingh",
+      "latitude": 24.716667,
+      "longitude": 90.433333
+    },
+    {
+      "station_name": "Faridpur",
+      "station_id": "faridpur",
+      "latitude": 23.6,
+      "longitude": 89.85
+    },
+    {
+      "station_name": "Madaripur",
+      "station_id": "madaripur",
+      "latitude": 23.166667,
+      "longitude": 90.183333
+    },
+    {
+      "station_name": "Srimangal",
+      "station_id": "srimangal",
+      "latitude": 24.3,
+      "longitude": 91.733333
+    },
+    {
+      "station_name": "Sylhet",
+      "station_id": "sylhet",
+      "latitude": 24.9,
+      "longitude": 91.883333
+    },
+    {
+      "station_name": "Bogra",
+      "station_id": "bogra",
+      "latitude": 24.85,
+      "longitude": 89.366667
+    },
+    {
+      "station_name": "Dinajpur",
+      "station_id": "dinajpur",
+      "latitude": 25.65,
+      "longitude": 88.683333
+    },
+    {
+      "station_name": "Ishurdi",
+      "station_id": "ishurdi",
+      "latitude": 24.133333,
+      "longitude": 89.05
+    },
+    {
+      "station_name": "Rajshahi",
+      "station_id": "rajshahi",
+      "latitude": 24.366667,
+      "longitude": 88.7
+    },
+    {
+      "station_name": "Rangpur",
+      "station_id": "rangpur",
+      "latitude": 25.733333,
+      "longitude": 89.233333
+    },
+    {
+      "station_name": "sydpur",
+      "station_id": "sydpur",
+      "latitude": 25.783333,
+      "longitude": 88.883333
+    },
+    {
+      "station_name": "chuadanga",
+      "station_id": "chuadanga",
+      "latitude": 23.65,
+      "longitude": 88.866667
+    },
+    {
+      "station_name": "Jessore",
+      "station_id": "jessore",
+      "latitude": 23.183333,
+      "longitude": 89.166667
+    },
+    {
+      "station_name": "Khulna",
+      "station_id": "khulna",
+      "latitude": 22.783333,
+      "longitude": 89.533333
+    },
+    {
+      "station_name": "Mongla",
+      "station_id": "mongla",
+      "latitude": 22.333333,
+      "longitude": 89.6
+    },
+    {
+      "station_name": "Satkhira",
+      "station_id": "satkhira",
+      "latitude": 22.716667,
+      "longitude": 89.083333
+    },
+    {
+      "station_name": "Barisal",
+      "station_id": "barisal",
+      "latitude": 22.75,
+      "longitude": 90.333333
+    },
+    {
+      "station_name": "Bhola",
+      "station_id": "bhola",
+      "latitude": 22.683333,
+      "longitude": 90.65
+    },
+    {
+      "station_name": "Khepupara",
+      "station_id": "khepupara",
+      "latitude": 21.983333,
+      "longitude": 90.233333
+    },
+    {
+      "station_name": "Patuakhali",
+      "station_id": "patuakhali",
+      "latitude": 22.333333,
+      "longitude": 90.333333
+    },
+    {
+      "station_name": "Chandpur",
+      "station_id": "chandpur",
+      "latitude": 23.266667,
+      "longitude": 90.7
+    },
+    {
+      "station_name": "Ambagan(Ctg)",
+      "station_id": "ambagan_ctg",
+      "latitude": 22.35,
+      "longitude": 91.816667
+    },
+    {
+      "station_name": "Chittagong",
+      "station_id": "chittagong",
+      "latitude": 22.266667,
+      "longitude": 91.816667
+    },
+    {
+      "station_name": "Comilla",
+      "station_id": "comilla",
+      "latitude": 23.433333,
+      "longitude": 91.183333
+    },
+    {
+      "station_name": "Cox's Bazar",
+      "station_id": "cox_s_bazar",
+      "latitude": 21.433333,
+      "longitude": 91.933333
+    },
+    {
+      "station_name": "Feni",
+      "station_id": "feni",
+      "latitude": 23.033333,
+      "longitude": 91.416667
+    },
+    {
+      "station_name": "Hatiya",
+      "station_id": "hatiya",
+      "latitude": 22.433333,
+      "longitude": 91.1
+    },
+    {
+      "station_name": "Kutubdia",
+      "station_id": "kutubdia",
+      "latitude": 21.816667,
+      "longitude": 91.85
+    },
+    {
+      "station_name": "M.court",
+      "station_id": "m_court",
+      "latitude": 22.866667,
+      "longitude": 91.1
+    },
+    {
+      "station_name": "Rangamati",
+      "station_id": "rangamati",
+      "latitude": 22.533333,
+      "longitude": 92.2
+    },
+    {
+      "station_name": "Sandwip",
+      "station_id": "sandwip",
+      "latitude": 22.483333,
+      "longitude": 91.433333
+    },
+    {
+      "station_name": "Sitakunda",
+      "station_id": "sitakunda",
+      "latitude": 23.583333,
+      "longitude": 91.7
+    },
+    {
+      "station_name": "Teknaf",
+      "station_id": "teknaf",
+      "latitude": 20.866667,
+      "longitude": 92.3
+    }
+  ]
+}
