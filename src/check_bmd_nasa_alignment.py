@@ -39,11 +39,11 @@ UNIT_ROWS = [
     },
     {
         "parameter": "PRECTOTCORR",
-        "bmd_unit": "millimeter per 3-hour observation",
-        "nasa_hourly_unit": "mm/hour transformed to 3-hour total",
+        "bmd_unit": "millimeter at 3-hour observation timestamp",
+        "nasa_hourly_unit": "mm/hour picked at the matching BMD timestamp",
         "picked_3h_unit_match": "yes",
         "average_3h_unit_match": "yes",
-        "note": "NASA hourly precipitation is summed over each 3-hour window; T2M/RH2M/WS10M still follow the selected picked or averaged method.",
+        "note": "NASA precipitation is picked at the same 3-hour observation timestamp, matching the corrected BMD interpretation.",
     },
     {
         "parameter": "WS10M",
@@ -182,7 +182,7 @@ def main() -> None:
             print(f"FAIL: {failure}")
         raise RuntimeError(f"{len(failures)} alignment failure(s).")
     print("Structural alignment passed: filenames, columns, rows, date/hour keys, and hours match.")
-    print("Unit alignment passed: PRECTOTCORR is summed to 3-hour totals in NASA outputs.")
+    print("Unit alignment passed: PRECTOTCORR is picked at matching BMD observation timestamps.")
 
 
 if __name__ == "__main__":

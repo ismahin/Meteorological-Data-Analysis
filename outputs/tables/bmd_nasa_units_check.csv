@@ -1,5 +1,5 @@
 parameter,bmd_unit,nasa_hourly_unit,picked_3h_unit_match,average_3h_unit_match,note
 T2M,degree Celsius,C,yes,yes,Averaging temperature over a 3-hour window keeps the same Celsius unit.
 RH2M,%,%,yes,yes,Averaging relative humidity over a 3-hour window keeps the same percent unit.
-PRECTOTCORR,millimeter per 3-hour observation,mm/hour transformed to 3-hour total,yes,yes,NASA hourly precipitation is summed over each 3-hour window; T2M/RH2M/WS10M still follow the selected picked or averaged method.
+PRECTOTCORR,millimeter at 3-hour observation timestamp,mm/hour picked at the matching BMD timestamp,yes,yes,"NASA precipitation is picked at the same 3-hour observation timestamp, matching the corrected BMD interpretation."
 WS10M,m/s,m/s,yes,yes,Averaging wind speed over a 3-hour window keeps the same m/s unit.

@@ -13,7 +13,7 @@ YEAR,MO,DY,HR,T2M,RH2M,PRECTOTCORR,WS10M
 
 - `T2M`: air/dry-bulb temperature, degree Celsius
 - `RH2M`: relative humidity, percent
-- `PRECTOTCORR`: rainfall/precipitation, millimeter per 3-hour period after processing
+- `PRECTOTCORR`: rainfall/precipitation, millimeter value at the matching 3-hour observation timestamp
 - `WS10M`: wind speed, m/s
 
 ## Folder Layout
@@ -141,9 +141,9 @@ outputs/tables/nasa_power_3hourly_processing_report.csv
 
 Definitions:
 
-- `3h_picked`: picks NASA `T2M`, `RH2M`, and `WS10M` at BMD hours `0,3,6,...,21`.
+- `3h_picked`: picks NASA `T2M`, `RH2M`, `PRECTOTCORR`, and `WS10M` at BMD hours `0,3,6,...,21`.
 - `3h_average`: averages NASA `T2M`, `RH2M`, and `WS10M` over `0-2`, `3-5`, etc.
-- In both folders, `PRECTOTCORR` is summed over each 3-hour window so rainfall is comparable with BMD 3-hour rainfall totals.
+- In both folders, `PRECTOTCORR` is picked at the exact BMD observation timestamp, following the corrected interpretation that the BMD value is the third-hour observation value rather than a 3-hour average.
 
 ### 5. Check Dataset Alignment
 
@@ -203,11 +203,11 @@ The analysis includes:
 The current reports show:
 
 - `3h_picked` performs better than `3h_average` for `T2M`, `RH2M`, and slightly for `WS10M`.
-- `PRECTOTCORR` is identical between the two NASA variants because rainfall is summed to 3-hour totals in both.
+- `PRECTOTCORR` is identical between the two NASA variants because rainfall is exact-hour picked in both.
 - Temperature agreement is strong.
 - Relative humidity agreement is moderate.
 - NASA wind speed has a positive bias.
-- Precipitation is the largest issue: NASA POWER strongly overestimates 3-hour rainfall amount and event frequency for the current downloaded dataset.
+- Precipitation remains the largest issue, but NASA POWER is now compared using exact-hour picked precipitation rather than a 3-hour sum.
 
 See:
 
@@ -226,6 +226,8 @@ outputs/reports/bmd_nasa_comparison_3h_average.md
 
 - The raw NASA files are hourly; do not compare them directly with BMD 3-hourly files.
 - Use the processed NASA folders for analysis.
+- The deployed API supports timestamps after 2024 by searching backward from the requested 3-hour UTC timestamp until NASA POWER returns complete non-missing values. The response reports both the requested and resolved timestamps plus the data lag.
+- For post-2024 operational requests, live BMD observations are not available in this project, so the correction model uses historical BMD month/hour climatology at the nearest stations as anchors. Historical 2021-2024 requests still use observed BMD station rows.
 - Use matching filenames to pair datasets, for example:
 
 ```text

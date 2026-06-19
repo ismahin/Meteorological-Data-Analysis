@@ -60,31 +60,14 @@ def read_hourly_nasa(path: Path) -> pd.DataFrame:
 
 def picked_3hourly(hourly: pd.DataFrame) -> pd.DataFrame:
     picked = hourly[hourly["HR"].isin(OBSERVED_HOURS)].copy()
-    rainfall = rainfall_3hourly_total(hourly)
-    picked = picked.drop(columns=["PRECTOTCORR"]).merge(
-        rainfall,
-        on=["YEAR", "MO", "DY", "HR"],
-        how="left",
-    )
     return picked[OUTPUT_COLUMNS].sort_values(["YEAR", "MO", "DY", "HR"]).reset_index(drop=True)
-
-
-def rainfall_3hourly_total(hourly: pd.DataFrame) -> pd.DataFrame:
-    working = hourly[["timestamp", "PRECTOTCORR"]].copy()
-    working["window_start"] = working["timestamp"].dt.floor("3h")
-    rainfall = working.groupby("window_start", as_index=False)["PRECTOTCORR"].sum(min_count=1)
-    rainfall.insert(0, "HR", rainfall["window_start"].dt.hour)
-    rainfall.insert(0, "DY", rainfall["window_start"].dt.day)
-    rainfall.insert(0, "MO", rainfall["window_start"].dt.month)
-    rainfall.insert(0, "YEAR", rainfall["window_start"].dt.year)
-    return rainfall[["YEAR", "MO", "DY", "HR", "PRECTOTCORR"]]
 
 
 def average_3hourly(hourly: pd.DataFrame) -> pd.DataFrame:
     working = hourly.copy()
     working["window_start"] = working["timestamp"].dt.floor("3h")
     averaged = working.groupby("window_start", as_index=False)[AVERAGE_COLUMNS].mean()
-    rainfall = rainfall_3hourly_total(hourly)
+    rainfall = picked_3hourly(hourly)[["YEAR", "MO", "DY", "HR", "PRECTOTCORR"]]
     averaged.insert(0, "HR", averaged["window_start"].dt.hour)
     averaged.insert(0, "DY", averaged["window_start"].dt.day)
     averaged.insert(0, "MO", averaged["window_start"].dt.month)

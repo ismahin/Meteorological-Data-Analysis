@@ -1,0 +1,67 @@
+{
+  "version": "bias-correction-v1",
+  "feature_columns": [
+    "nasa_value",
+    "anchor_idw_bmd",
+    "anchor_idw_nasa",
+    "nasa_minus_anchor_idw_nasa",
+    "latitude",
+    "longitude",
+    "month",
+    "hour",
+    "season",
+    "sin_month",
+    "cos_month",
+    "sin_hour",
+    "cos_hour",
+    "idw_residual",
+    "idw_corrected",
+    "anchor1_bmd",
+    "anchor1_nasa",
+    "anchor1_residual",
+    "anchor1_distance_km",
+    "anchor2_bmd",
+    "anchor2_nasa",
+    "anchor2_residual",
+    "anchor2_distance_km",
+    "anchor3_bmd",
+    "anchor3_nasa",
+    "anchor3_residual",
+    "anchor3_distance_km",
+    "anchor4_bmd",
+    "anchor4_nasa",
+    "anchor4_residual",
+    "anchor4_distance_km",
+    "anchor5_bmd",
+    "anchor5_nasa",
+    "anchor5_residual",
+    "anchor5_distance_km"
+  ],
+  "variables": [
+    "T2M",
+    "RH2M",
+    "PRECTOTCORR",
+    "WS10M"
+  ],
+  "holdout_stations": [
+    "dhaka",
+    "rangpur",
+    "rajshahi",
+    "sylhet",
+    "khulna",
+    "cox_s_bazar",
+    "teknaf"
+  ],
+  "selected_models": {
+    "T2M": "anchor_idw_bmd",
+    "RH2M": "anchor_idw_bmd",
+    "PRECTOTCORR": "ml_two_stage",
+    "WS10M": "linear_stack"
+  },
+  "selected_decays_km": {
+    "T2M": 150.0,
+    "RH2M": 200.0,
+    "PRECTOTCORR": 75.0,
+    "WS10M": 200.0
+  }
+}

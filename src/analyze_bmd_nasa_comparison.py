@@ -26,7 +26,7 @@ VAR_LABELS = {
 VAR_UNITS = {
     "T2M": "deg C",
     "RH2M": "%",
-    "PRECTOTCORR": "mm / 3h",
+    "PRECTOTCORR": "mm at obs hour",
     "WS10M": "m/s",
 }
 VAR_AGG = {
@@ -296,7 +296,7 @@ def write_variant_report(
 This report treats BMD station observations as the reference and NASA POWER as the gridded estimate at the station coordinate. The metric set follows common meteorological and hydroclimate validation practice:
 
 - NASA POWER's own meteorology assessment uses linear regression, Pearson correlation, mean bias error, MAE, and RMSE for station comparisons.
-- NASA POWER hourly data are hourly-average products; precipitation is provided as `mm/hour`, so this project sums hourly `PRECTOTCORR` into 3-hour totals before comparing with BMD.
+- NASA POWER hourly data are matched to BMD's 3-hour observation timestamps. `PRECTOTCORR` is picked at the exact matching hour under the corrected BMD interpretation.
 - Precipitation validation should include both amount metrics and event-detection metrics because rain occurrence can be wrong even when totals look acceptable.
 - NSE and KGE are included because hydroclimate studies often use them to evaluate timing, variability, and bias together.
 - Seasonal and monthly summaries are included because Bangladesh monsoon behavior can dominate annual statistics.
@@ -312,14 +312,14 @@ References are listed at the end of this report.
 - Period: 2021-01-01 to 2024-12-31
 - Rows per station: 11,688
 - Columns: `YEAR, MO, DY, HR, T2M, RH2M, PRECTOTCORR, WS10M`
-- Rainfall unit treatment: NASA hourly precipitation was summed to 3-hour totals.
+- Rainfall unit treatment: NASA hourly precipitation is picked at the matching BMD observation timestamp.
 
 ## Key Findings
 
 - Temperature agreement is strong: `r={temp["pearson_r"]:.3f}`, `RMSE={temp["rmse"]:.3f} deg C`, and mean bias is `{temp["bias"]:.3f} deg C`.
 - Relative humidity agreement is moderate: `r={rh["pearson_r"]:.3f}`, `RMSE={rh["rmse"]:.3f}%`, and mean bias is `{rh["bias"]:.3f}%`.
 - Wind speed has a positive NASA bias: mean BMD is `{wind["bmd_mean"]:.3f} m/s`, mean NASA is `{wind["nasa_mean"]:.3f} m/s`, and bias is `{wind["bias"]:.3f} m/s`.
-- Precipitation is the largest problem: NASA mean 3-hour precipitation is `{rain["nasa_mean"]:.3f} mm` versus BMD `{rain["bmd_mean"]:.3f} mm`, with percent bias `{rain["pbias_percent"]:.1f}%`.
+- Precipitation is the largest problem: NASA mean matched-hour precipitation is `{rain["nasa_mean"]:.3f} mm` versus BMD `{rain["bmd_mean"]:.3f} mm`, with percent bias `{rain["pbias_percent"]:.1f}%`.
 - Because precipitation is strongly intermittent, use the event-detection table together with RMSE/bias before drawing rainfall conclusions.
 
 ## Overall 3-Hourly Metrics
@@ -360,7 +360,7 @@ Daily aggregation uses means for `T2M`, `RH2M`, and `WS10M`, and sums for `PRECT
 2. Use `MAE` and `RMSE` to judge typical and large-error behavior in physical units.
 3. Use `pearson_r`, `NSE`, and `KGE` to judge whether NASA captures timing and variability, not only mean conditions.
 4. For precipitation, prioritize event metrics and seasonal/monthly totals; precipitation is intermittent and strongly skewed.
-5. Compare this report with the other NASA variant. If the averaged variant improves RMSE for temperature, humidity, and wind without harming correlation, it is generally the better comparison dataset. For precipitation, both variants use the same 3-hour sum.
+5. Compare this report with the other NASA variant. If the averaged variant improves RMSE for temperature, humidity, and wind without harming correlation, it is generally the better comparison dataset. For precipitation, both variants use the same exact-hour picked value.
 
 ## References
 
