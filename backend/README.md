@@ -2,6 +2,12 @@
 
 Production FastAPI service for NASA POWER to BMD bias-corrected estimates.
 
+Current deployed URL:
+
+```text
+https://64-227-16-188.sslip.io
+```
+
 ## Runtime Layout
 
 - `app/` - FastAPI application and correction core.
@@ -32,10 +38,10 @@ copy .env.example .env
 docker compose up --build -d
 ```
 
-Set `BACKEND_CORS_ORIGINS` in `.env` to your deployed Vercel domain before production use:
+Set `BACKEND_CORS_ORIGINS` to your deployed Vercel domain before production use:
 
 ```env
-BACKEND_CORS_ORIGINS=https://your-project.vercel.app
+BACKEND_CORS_ORIGINS=https://meteorological-data-analysis.vercel.app
 ```
 
 ## VPS Deployment
@@ -43,9 +49,9 @@ BACKEND_CORS_ORIGINS=https://your-project.vercel.app
 1. Copy the `backend/` folder to the VPS.
 2. Install Docker and Docker Compose.
 3. Create `.env` from `.env.example`.
-4. Set `BACKEND_CORS_ORIGINS` to the Vercel frontend URL.
+4. Set `BACKEND_CORS_ORIGINS` to the Vercel frontend URL if it differs from the default.
 5. Run `docker compose up --build -d`.
-6. Put Nginx/Caddy in front of port `8000` and terminate HTTPS there.
+6. Caddy serves HTTPS and reverse-proxies to the API container.
 
 ## API
 

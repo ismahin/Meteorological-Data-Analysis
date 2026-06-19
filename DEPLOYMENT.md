@@ -5,6 +5,12 @@ This project is now split into two deployable folders:
 - `backend/` - FastAPI model API, Dockerfile, Docker Compose, trained model artifacts, and runtime station data.
 - `frontend/` - Vite React app configured for Vercel.
 
+Current deployed backend:
+
+```text
+https://64-227-16-188.sslip.io
+```
+
 ## Backend on VPS
 
 1. Copy `backend/` to the VPS.
@@ -17,7 +23,7 @@ cp .env.example .env
 3. Edit `.env` and set the Vercel frontend URL:
 
 ```env
-BACKEND_CORS_ORIGINS=https://your-project.vercel.app
+BACKEND_CORS_ORIGINS=https://meteorological-data-analysis.vercel.app
 ```
 
 4. Build and run:
@@ -32,7 +38,7 @@ docker compose up --build -d
 curl http://127.0.0.1:8000/api/health
 ```
 
-6. Put Nginx or Caddy in front of the API and expose it with HTTPS.
+6. The included Compose stack runs Caddy on ports `80` and `443` and proxies to the API on localhost port `8000`.
 
 ## Frontend on Vercel
 
@@ -40,7 +46,7 @@ curl http://127.0.0.1:8000/api/health
 2. Add this Vercel environment variable:
 
 ```env
-VITE_API_BASE=https://your-backend-domain.com
+VITE_API_BASE=https://64-227-16-188.sslip.io
 ```
 
 3. Deploy with the default Vite build settings:

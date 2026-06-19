@@ -1,0 +1,4 @@
+64-227-16-188.sslip.io {
+    encode zstd gzip
+    reverse_proxy bmd-nasa-api:8000
+}
