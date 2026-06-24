@@ -26,6 +26,13 @@ cp .env.example .env
 BACKEND_CORS_ORIGINS=https://meteorological-data-analysis.vercel.app
 ```
 
+Keep the packaged operational model path:
+
+```env
+OPERATIONAL_MODEL_PATH=/app/models/operational_forecast/model_bundle.joblib
+BMD_LIVE_ENABLED=false
+```
+
 4. Build and run:
 
 ```bash

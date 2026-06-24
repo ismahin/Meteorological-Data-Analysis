@@ -408,6 +408,26 @@ input {
   background: #eaf7f4;
 }
 
+.forecast-warning {
+  display: grid;
+  gap: 5px;
+  margin-top: 14px;
+  border: 1px solid #fdba74;
+  border-radius: 8px;
+  padding: 12px 13px;
+  color: #9a3412;
+  background: #fff7ed;
+}
+
+.forecast-warning strong {
+  font-size: 13px;
+}
+
+.forecast-warning span {
+  font-size: 12px;
+  line-height: 1.45;
+}
+
 .nearest-card span {
   color: var(--accent);
   font-size: 12px;
@@ -464,6 +484,47 @@ input {
   font-size: 11px;
   font-weight: 800;
   text-transform: uppercase;
+}
+
+.result-block.is-unavailable header span {
+  color: var(--danger);
+}
+
+.unavailable-message {
+  display: grid;
+  gap: 4px;
+  padding: 13px 12px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.unavailable-message strong {
+  color: var(--danger);
+  font-size: 13px;
+}
+
+.latest-nasa {
+  display: grid;
+  gap: 3px;
+  border-top: 1px solid var(--border);
+  padding: 10px 12px;
+  background: #f1f5f4;
+}
+
+.latest-nasa span {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.latest-nasa strong {
+  font-size: 12px;
+}
+
+.latest-nasa small {
+  color: var(--muted);
+  font-size: 11px;
 }
 
 .metric-row {

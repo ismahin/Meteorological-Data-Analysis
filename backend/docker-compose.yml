@@ -10,6 +10,8 @@ services:
       BMD_STATIONS_JSON: /app/data/processed/bmd_station_coordinates_35.json
       BMD_TIMESERIES_DIR: /app/data/processed/bmd_stations_3hourly
       NASA_STATION_TIMESERIES_DIR: /app/data/processed/nasa_station_data/3h_picked
+      OPERATIONAL_MODEL_PATH: /app/models/operational_forecast/model_bundle.joblib
+      BMD_LIVE_ENABLED: "false"
     ports:
       - "127.0.0.1:8000:8000"
     restart: unless-stopped

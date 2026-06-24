@@ -193,12 +193,15 @@ def inverse_distance_residual(
     distances: list[float],
     decay_km: float,
 ) -> float:
+    for value, nasa_value, distance in zip(anchor_values, anchor_nasa_values, distances):
+        if pd.notna(value) and pd.notna(nasa_value) and pd.notna(distance) and float(distance) <= 1e-6:
+            return float(value - nasa_value)
     weights = []
     residuals = []
     for value, nasa_value, distance in zip(anchor_values, anchor_nasa_values, distances):
         if pd.isna(value) or pd.isna(nasa_value):
             continue
-        weights.append(math.exp(-max(distance, 0.01) / decay_km) / max(distance, 1.0))
+        weights.append(math.exp(-max(distance, 0.01) / decay_km) / max(distance, 0.01))
         residuals.append(value - nasa_value)
     if not weights:
         return 0.0
@@ -208,12 +211,15 @@ def inverse_distance_residual(
 
 
 def inverse_distance_average(values: list[float], distances: list[float], decay_km: float) -> float:
+    for value, distance in zip(values, distances):
+        if pd.notna(value) and pd.notna(distance) and float(distance) <= 1e-6:
+            return float(value)
     weights = []
     clean_values = []
     for value, distance in zip(values, distances):
         if pd.isna(value) or pd.isna(distance):
             continue
-        weights.append(math.exp(-max(distance, 0.01) / decay_km) / max(distance, 1.0))
+        weights.append(math.exp(-max(distance, 0.01) / decay_km) / max(distance, 0.01))
         clean_values.append(value)
     if not weights:
         return math.nan

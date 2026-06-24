@@ -56,6 +56,23 @@ function formatNumber(value, digits = 2) {
   return Number(value).toFixed(digits);
 }
 
+function formatTimestamp(value) {
+  return value ? value.replace("T", " ").replace(":00Z", " UTC") : "Unavailable";
+}
+
+function sourceLabel(estimate) {
+  if (!estimate || estimate.status !== "available") return "Unavailable";
+  if (estimate.classification === "provisional_forecast") return "Provisional forecast";
+  if (estimate.classification === "historical_correction") return "Historical correction";
+  return "NASA exact correction";
+}
+
+function bmdSourceLabel(status) {
+  if (status?.observation_available) return "Actual archived BMD observation";
+  if (status?.kind === "model_forecast") return "BMD model forecast (no live observation)";
+  return "BMD model estimate (no live observation)";
+}
+
 function toUtcIso(localValue) {
   return `${localValue}:00Z`;
 }
@@ -152,35 +169,80 @@ function MetricRow({ label, value, unit }) {
 function ResultBlock({ variable, estimate }) {
   const meta = VARIABLES.find((item) => item.id === variable);
   const Icon = meta?.icon || Activity;
+  const requested = estimate.requested;
+  const latest = estimate.latest_nasa;
+  const unavailable = requested?.status !== "available";
+  const showLatest = latest && latest.timestamp_utc !== requested?.timestamp_utc;
+  const isForecast = requested?.classification === "provisional_forecast";
+  const isHistorical = requested?.classification === "historical_correction";
   return (
-    <section className="result-block">
+    <section className={`result-block ${unavailable ? "is-unavailable" : ""}`}>
       <header>
         <div>
           <Icon size={18} />
           <h3>{meta?.label || variable}</h3>
         </div>
-        <span>{estimate.selected_model}</span>
+        <span>{sourceLabel(requested)}</span>
       </header>
-      <MetricRow label="Corrected estimate" value={formatNumber(estimate.corrected)} unit={meta?.unit} />
-      <MetricRow label="NASA raw" value={formatNumber(estimate.raw_nasa)} unit={meta?.unit} />
-      <MetricRow
-        label="Nearest BMD"
-        value={formatNumber(estimate.nearest_bmd_station_value)}
-        unit={meta?.unit}
-      />
-      <MetricRow
-        label="Residual interval"
-        value={`${formatNumber(estimate.uncertainty_residual_p05)} to ${formatNumber(
-          estimate.uncertainty_residual_p95,
-        )}`}
-        unit={meta?.unit}
-      />
-      {variable === "PRECTOTCORR" ? (
+      {unavailable ? (
+        <div className="unavailable-message">
+          <strong>Estimate unavailable</strong>
+          <span>{requested?.reason?.replaceAll("_", " ") || "No validated estimate is available."}</span>
+        </div>
+      ) : (
+        <>
+          {isForecast ? (
+            <>
+              <MetricRow label="BMD forecast (model)" value={formatNumber(requested.bmd_forecast ?? requested.bmd_equivalent)} unit={meta?.unit} />
+              <MetricRow label="NASA forecast (raw)" value={formatNumber(requested.nasa_forecast ?? requested.raw_forecast)} unit={meta?.unit} />
+              <MetricRow label="Corrected value" value={formatNumber(requested.corrected_nasa ?? requested.bmd_equivalent)} unit={meta?.unit} />
+            </>
+          ) : isHistorical ? (
+            <>
+              <MetricRow label="BMD actual (nearest station)" value={formatNumber(requested.bmd_actual ?? requested.bmd_raw)} unit={meta?.unit} />
+              <MetricRow label="NASA raw" value={formatNumber(requested.nasa_raw ?? requested.raw_forecast)} unit={meta?.unit} />
+              <MetricRow label="Corrected value" value={formatNumber(requested.corrected_nasa ?? requested.bmd_estimate ?? requested.bmd_equivalent)} unit={meta?.unit} />
+            </>
+          ) : (
+            <>
+              <MetricRow label="BMD estimate (model)" value={formatNumber(requested.bmd_estimate ?? requested.bmd_equivalent)} unit={meta?.unit} />
+              <MetricRow label="NASA raw" value={formatNumber(requested.nasa_raw ?? requested.raw_forecast)} unit={meta?.unit} />
+              <MetricRow label="Corrected value" value={formatNumber(requested.corrected_nasa ?? requested.bmd_estimate ?? requested.bmd_equivalent)} unit={meta?.unit} />
+            </>
+          )}
+          <MetricRow
+            label="Corrected-value 90% interval"
+            value={`${formatNumber(requested.p05)} to ${formatNumber(requested.p95)}`}
+            unit={meta?.unit}
+          />
+          <MetricRow label="Forecast horizon" value={formatNumber(requested.forecast_horizon_hours, 0)} unit="hours" />
+          {isHistorical ? null : <MetricRow label="BMD forecast model" value={requested.model_version} />}
+          <MetricRow label="Correction model" value={requested.correction_model_version ?? requested.model_version} />
+          {requested.correction_method ? <MetricRow label="Correction method" value={requested.correction_method} /> : null}
+          {requested.correction_anchor_station_name ? (
+            <MetricRow
+              label="Correction anchor"
+              value={`${requested.correction_anchor_station_name} (${formatNumber(requested.correction_anchor_distance_km, 2)} km)`}
+            />
+          ) : null}
+        </>
+      )}
+      {variable === "PRECTOTCORR" && requested?.wet_probability !== null ? (
         <MetricRow
           label="Wet probability"
-          value={formatNumber((estimate.wet_probability || 0) * 100, 1)}
+          value={formatNumber((requested.wet_probability || 0) * 100, 1)}
           unit="%"
         />
+      ) : null}
+      {showLatest ? (
+        <div className="latest-nasa">
+          <span>Latest NASA available</span>
+          <strong>{formatTimestamp(latest.timestamp_utc)}</strong>
+          <small>
+            NASA raw {formatNumber(latest.nasa_raw ?? latest.raw_forecast)} {meta?.unit}
+            {latest.bmd_estimate !== null ? ` · NASA corrected using BMD ${formatNumber(latest.corrected_nasa ?? latest.bmd_estimate)} ${meta?.unit}` : ""}
+          </small>
+        </div>
       ) : null}
     </section>
   );
@@ -231,7 +293,7 @@ function App() {
     }
     setStatus("loading");
     try {
-      const response = await fetch(`${API_BASE}/api/correct`, {
+      const response = await fetch(`${API_BASE}/api/v2/estimate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -262,7 +324,7 @@ function App() {
           </div>
           <div>
             <h1>NASA-BMD Corrector</h1>
-            <p>Bangladesh 3-hour historical estimator</p>
+            <p>Bangladesh 3-hour correction and operational forecast</p>
           </div>
         </div>
 
@@ -313,7 +375,7 @@ function App() {
 
           {validationError || error ? <p className="form-error">{error || validationError}</p> : null}
           <button type="submit" disabled={status === "loading"}>
-            {status === "loading" ? "Calculating..." : "Correct NASA value"}
+            {status === "loading" ? "Calculating..." : "Estimate weather"}
           </button>
         </form>
 
@@ -387,18 +449,28 @@ function App() {
 
       <aside className="result-panel">
         <header className="result-header">
-          <span>Corrected Output</span>
-          <strong>{result ? result.resolved_timestamp_utc.replace("T", " ").replace(":00Z", " UTC") : "No run yet"}</strong>
+          <span>Requested-time output</span>
+          <strong>{result ? formatTimestamp(result.requested_timestamp_utc) : "No run yet"}</strong>
         </header>
 
         {result ? (
           <>
+            {result.data_warning ? (
+              <section className="forecast-warning" role="status">
+                <strong>{result.data_warning}</strong>
+                <span>
+                  NASA data are available through {formatTimestamp(result.latest_nasa_timestamp_utc)}. The requested-time values are model estimates.
+                </span>
+              </section>
+            ) : null}
             <section className="nearest-card">
-              <span>Nearest BMD station</span>
+              <span>{result.mode === "provisional_forecast" ? "Forecast status" : "Data status"}</span>
               <h2>{result.nearest_station.station_name}</h2>
-              <p>{formatNumber(result.nearest_station.distance_km, 1)} km from selected point</p>
-              <p>{result.mode === "operational_climatology_anchors" ? "Operational mode: historical BMD climatology anchors" : "Historical mode: observed BMD anchors"}</p>
+              <p>Nearest BMD reference station · {formatNumber(result.nearest_station.distance_km, 1)} km</p>
+              <p>Latest NASA: {formatTimestamp(result.latest_nasa_timestamp_utc)}</p>
               <p>NASA lag: {formatNumber(result.nasa_data_lag_hours, 1)} hours</p>
+              <p>BMD source: {bmdSourceLabel(result.bmd_data_status)}</p>
+              <p>BMD archive ends: {formatTimestamp(result.bmd_data_status?.archive_end_utc)}</p>
             </section>
             <div className="results-list">
               {Object.entries(result.estimates).map(([variable, estimate]) => (
@@ -410,7 +482,7 @@ function App() {
           <div className="empty-state">
             <MapPin size={28} />
             <h2>Select a coordinate and timestamp</h2>
-            <p>The system will fetch NASA POWER data, anchor to nearby BMD observations, and return corrected estimates.</p>
+            <p>The system uses NASA POWER history and models validated against BMD observations to return corrected or provisional estimates.</p>
           </div>
         )}
       </aside>

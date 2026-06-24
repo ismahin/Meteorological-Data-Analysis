@@ -1,0 +1,23 @@
+{
+  "candidate": "chronos-2",
+  "checkpoint": "amazon/chronos-2",
+  "device": "cpu",
+  "context_steps": 720,
+  "forecast_steps": 32,
+  "variables": [
+    "T2M",
+    "RH2M",
+    "PRECTOTCORR",
+    "WS10M"
+  ],
+  "output_rows": 128,
+  "load_seconds": 2.585602500003006,
+  "predict_seconds": 0.9551157000023522,
+  "rss_mb": 1321.3984375,
+  "latency_gate_seconds": 5.0,
+  "memory_gate_mb": 2048,
+  "latency_gate_passed": true,
+  "memory_gate_passed": true,
+  "production_eligible": true,
+  "license": "Apache-2.0"
+}

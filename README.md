@@ -226,8 +226,9 @@ outputs/reports/bmd_nasa_comparison_3h_average.md
 
 - The raw NASA files are hourly; do not compare them directly with BMD 3-hourly files.
 - Use the processed NASA folders for analysis.
-- The deployed API supports timestamps after 2024 by searching backward from the requested 3-hour UTC timestamp until NASA POWER returns complete non-missing values. The response reports both the requested and resolved timestamps plus the data lag.
-- For post-2024 operational requests, live BMD observations are not available in this project, so the correction model uses historical BMD month/hour climatology at the nearest stations as anchors. Historical 2021-2024 requests still use observed BMD station rows.
+- The v2 API supports post-2024 timestamps with a leakage-tested NASA-history-to-BMD forecast model. It reports the requested timestamp, latest NASA timestamp, lag, forecast horizon, uncertainty, and per-variable quality status.
+- Live BMD observations are not used until BMD supplies a documented API. Historical BMD observations remain the training target; historical climatology is never presented as a live observation.
+- Optional SOTA evaluation uses `requirements-sota.txt`; Chronos-2 resource and holdout results are recorded under `outputs/tables/operational_forecast/` without adding its 1.3 GB process footprint to the production image.
 - Use matching filenames to pair datasets, for example:
 
 ```text

@@ -5,6 +5,9 @@ web/node_modules/
 web/dist/
 frontend/node_modules/
 frontend/dist/
+.runlogs/
+outputs/tables/operational_forecast/holdout_predictions.csv
+outputs/tables/operational_forecast/chronos2_accuracy_predictions.csv
 backend/.env
 backend/.venv/
 backend/venv/
