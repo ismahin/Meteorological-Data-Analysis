@@ -12,7 +12,7 @@ https://64-227-16-188.sslip.io
 
 - `app/` - FastAPI application and correction core.
 - `models/bias_correction/` - trained model bundle and metadata.
-- `data/processed/` - station metadata and historical station time series used for anchors.
+- `data/processed/` - station metadata, scraped OGIMET BMD SYNOP station CSVs, and scraped NASA POWER station CSVs used for anchors/training.
 - `pipelines/` - retraining pipeline copied from the research workspace.
 
 ## Local Run
@@ -80,6 +80,10 @@ requested 3-hour timestamp is missing, the packaged model forecasts directly fro
 latest NASA timestamp. Temperature, humidity, rainfall, and wind are independently
 gated by held-out BMD validation. A failed gate is returned as unavailable; climatology
 is never presented as a live observation.
+
+Packaged correction and forecasting artifacts are trained from scraped OGIMET BMD SYNOP
+station CSVs plus scraped NASA POWER station CSVs. Excel-derived BMD weather CSVs are
+not used by the default runtime or retraining commands.
 
 When the requested UTC timestamp is not in the future, the API also queries OGIMET
 `getsynop` for Bangladesh SYNOP rows at the exact UTC hour. If the nearest BMD station

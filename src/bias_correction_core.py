@@ -15,7 +15,7 @@ import requests
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_STATIONS_JSON = PROJECT_ROOT / "data" / "processed" / "bmd_station_coordinates_35.json"
-DEFAULT_BMD_DIR = PROJECT_ROOT / "data" / "processed" / "bmd_stations_3hourly"
+DEFAULT_BMD_DIR = PROJECT_ROOT / "data" / "processed" / "ogimet_synop" / "by_station"
 DEFAULT_NASA_DIR = PROJECT_ROOT / "data" / "processed" / "nasa_station_data" / "3h_picked"
 DEFAULT_MODEL_DIR = PROJECT_ROOT / "models" / "bias_correction"
 

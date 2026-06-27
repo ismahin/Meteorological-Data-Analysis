@@ -1,5 +1,12 @@
 {
   "version": "nasa-bmd-operational-v2",
+  "data_sources": {
+    "bmd_observations": "backend/data/processed/ogimet_synop/by_station",
+    "bmd_observations_kind": "scraped_ogimet_synop",
+    "nasa_station_data": "backend/data/processed/nasa_station_data/3h_picked",
+    "nasa_station_data_kind": "scraped_nasa_power",
+    "excel_weather_observations_used": false
+  },
   "feature_columns": [
     "latitude",
     "longitude",
@@ -100,10 +107,10 @@
     }
   },
   "rain_probability_thresholds": {
-    "0-24": 0.2,
-    "27-48": 0.17,
-    "51-72": 0.13,
-    "75-96": 0.16
+    "0-24": 0.5,
+    "27-48": 0.5,
+    "51-72": 0.5,
+    "75-96": 0.5
   },
   "interval_safety_factors": {
     "WS10M": 1.25

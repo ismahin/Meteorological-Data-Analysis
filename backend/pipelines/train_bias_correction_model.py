@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -13,6 +14,10 @@ from sklearn.ensemble import HistGradientBoostingClassifier, HistGradientBoostin
 from sklearn.linear_model import RidgeCV
 from sklearn.metrics import accuracy_score, mean_absolute_error, mean_squared_error
 from sklearn.model_selection import GroupKFold
+
+
+BACKEND_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(BACKEND_ROOT))
 
 from app.bias_correction_core import (
     DEFAULT_BMD_DIR,
@@ -31,7 +36,7 @@ from app.bias_correction_core import (
 )
 
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
+PROJECT_ROOT = BACKEND_ROOT.parent
 DEFAULT_TABLE_DIR = PROJECT_ROOT / "outputs" / "tables" / "bias_correction"
 DEFAULT_REPORT = PROJECT_ROOT / "outputs" / "reports" / "bias_correction_validation.md"
 HOLDOUT_STATIONS = ["dhaka", "rangpur", "rajshahi", "sylhet", "khulna", "cox_s_bazar", "teknaf"]
@@ -83,6 +88,14 @@ STACK_COLUMNS = [
     "season",
     "nearest_distance_km",
 ]
+
+
+def data_source_label(path: Path) -> str:
+    resolved = path.resolve()
+    try:
+        return resolved.relative_to(PROJECT_ROOT.resolve()).as_posix()
+    except ValueError:
+        return resolved.as_posix()
 
 
 def metric_summary(obs: pd.Series, pred: pd.Series) -> dict[str, float]:
@@ -525,7 +538,9 @@ def write_report(path: Path, holdout_metrics: pd.DataFrame, selected: dict[str, 
     table = holdout_metrics.round(4).to_markdown(index=False)
     text = f"""# Bias-Correction Validation
 
-Training data: official BMD/NASA paired station data, 2021-2024, 3-hour UTC steps.
+Training data: scraped OGIMET BMD SYNOP station data paired with scraped NASA POWER
+station data, 2021-2024, 3-hour UTC steps. No Excel-derived BMD weather observations
+are used by this artifact.
 
 Final isolated holdout stations: {", ".join(HOLDOUT_STATIONS)}
 
@@ -618,6 +633,13 @@ def main() -> None:
 
     bundle = {
         "version": "bias-correction-v1",
+        "data_sources": {
+            "bmd_observations": data_source_label(args.bmd_dir),
+            "bmd_observations_kind": "scraped_ogimet_synop",
+            "nasa_station_data": data_source_label(args.nasa_dir),
+            "nasa_station_data_kind": "scraped_nasa_power",
+            "excel_weather_observations_used": False,
+        },
         "feature_columns": FEATURE_COLUMNS,
         "variables": VARIABLES,
         "holdout_stations": HOLDOUT_STATIONS,
@@ -635,6 +657,7 @@ def main() -> None:
                 "version": bundle["version"],
                 "feature_columns": FEATURE_COLUMNS,
                 "variables": VARIABLES,
+                "data_sources": bundle["data_sources"],
                 "holdout_stations": HOLDOUT_STATIONS,
                 "selected_models": selected_models,
                 "selected_decays_km": selected_decays,

@@ -9,7 +9,7 @@ import pandas as pd
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_BMD_DIR = PROJECT_ROOT / "data" / "processed" / "bmd_stations_3hourly"
+DEFAULT_BMD_DIR = PROJECT_ROOT / "data" / "processed" / "ogimet_synop" / "by_station"
 DEFAULT_NASA_ROOT = PROJECT_ROOT / "data" / "processed" / "nasa_station_data"
 DEFAULT_ALIGNMENT_REPORT = PROJECT_ROOT / "outputs" / "tables" / "bmd_nasa_alignment_check.csv"
 DEFAULT_UNITS_REPORT = PROJECT_ROOT / "outputs" / "tables" / "bmd_nasa_units_check.csv"

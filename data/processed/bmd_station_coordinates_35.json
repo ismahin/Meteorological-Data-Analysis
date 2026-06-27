@@ -1,7 +1,7 @@
 {
   "coordinate_system": "WGS84 decimal degrees",
-  "source_workbook": "data/raw/ground/Four Years data (2021 to 2024) 4 paramters.xlsx",
-  "source_sheet": "Wind",
+  "source": "Static 35-station coordinate list. Weather observations for production artifacts come from OGIMET SYNOP, not Excel.",
+  "observation_source": "data/processed/ogimet_synop/by_station",
   "station_count": 35,
   "stations": [
     {

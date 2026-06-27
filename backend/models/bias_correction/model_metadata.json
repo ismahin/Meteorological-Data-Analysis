@@ -43,6 +43,13 @@
     "PRECTOTCORR",
     "WS10M"
   ],
+  "data_sources": {
+    "bmd_observations": "backend/data/processed/ogimet_synop/by_station",
+    "bmd_observations_kind": "scraped_ogimet_synop",
+    "nasa_station_data": "backend/data/processed/nasa_station_data/3h_picked",
+    "nasa_station_data_kind": "scraped_nasa_power",
+    "excel_weather_observations_used": false
+  },
   "holdout_stations": [
     "dhaka",
     "rangpur",
@@ -55,13 +62,13 @@
   "selected_models": {
     "T2M": "anchor_idw_bmd",
     "RH2M": "anchor_idw_bmd",
-    "PRECTOTCORR": "ml_two_stage",
+    "PRECTOTCORR": "anchor_idw_bmd",
     "WS10M": "linear_stack"
   },
   "selected_decays_km": {
-    "T2M": 150.0,
+    "T2M": 200.0,
     "RH2M": 200.0,
-    "PRECTOTCORR": 75.0,
-    "WS10M": 200.0
+    "PRECTOTCORR": 200.0,
+    "WS10M": 25.0
   }
 }

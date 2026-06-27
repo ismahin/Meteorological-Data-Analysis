@@ -23,10 +23,14 @@ data/
   raw/
     ground/
       Four Years data (2021 to 2024) 4 paramters.xlsx
+    ground_ogimet/
+      ogimet_getsynop_Bang_*.csv
     nasa_power/
       *_POWER_Point_Hourly_20210101_20241231_UTC.csv
   processed/
-    bmd_stations_3hourly/
+    ogimet_synop/by_station/
+      <station_id>.csv
+    bmd_stations_3hourly/   # legacy Excel-derived data, not used by production artifacts
       <station_id>.csv
     nasa_station_data/
       3h_average/
@@ -65,26 +69,41 @@ python -m pip install -r requirements.txt
 
 Run these commands from the project root.
 
-### 1. Split the BMD Workbook
+### 1. Download and Process BMD SYNOP From OGIMET
 
-The original BMD Excel workbook stores all stations and variables in multi-block sheets. This script converts it into one 3-hourly CSV per station.
+Production correction and forecasting artifacts use scraped OGIMET BMD SYNOP data,
+not the Excel workbook.
+
+Download OGIMET `getsynop` CSV files in UTC:
 
 ```powershell
-python src/split_bmd_excel.py --workbook "data/raw/ground/Four Years data (2021 to 2024) 4 paramters.xlsx"
+python src/download_ogimet_getsynop.py --start-utc 2021-01-01T00 --end-utc 2024-12-31T23
+```
+
+Decode the SYNOP reports:
+
+```powershell
+python src/process_ogimet_synop.py
 ```
 
 Output:
 
 ```text
-data/processed/bmd_stations_3hourly/<station_id>.csv
-outputs/tables/bmd_split_report.csv
+data/raw/ground_ogimet/ogimet_getsynop_Bang_*.csv
+data/processed/ogimet_synop/by_station/<station_id>.csv
+outputs/tables/ogimet_getsynop_download_report.csv
+outputs/tables/ogimet_synop_processing_report.csv
 ```
 
 Important parser notes:
 
-- Only the 35 stations common to all four variables are exported.
-- The duplicate `Hatiya` rainfall block is resolved using station index `11814`.
-- BMD wind speed/direction compact codes are parsed into wind speed only.
+- OGIMET query begin/end values are UTC.
+- Raw SYNOP `PARTE` text is decoded into `T2M`, `RH2M`, `PRECTOTCORR`, and `WS10M`.
+- Rainfall is present only when a usable SYNOP precipitation group is reported.
+
+Legacy note: `src/split_bmd_excel.py` can still reproduce the older Excel-derived
+CSV folder, but production runtime, corrected-value training, and operational
+forecasting no longer use that folder.
 
 ### 2. Station Coordinates
 
@@ -226,13 +245,13 @@ outputs/reports/bmd_nasa_comparison_3h_average.md
 
 - The raw NASA files are hourly; do not compare them directly with BMD 3-hourly files.
 - Use the processed NASA folders for analysis.
-- The v2 API supports post-2024 timestamps with a leakage-tested NASA-history-to-BMD forecast model. It reports the requested timestamp, latest NASA timestamp, lag, forecast horizon, uncertainty, and per-variable quality status.
-- Live BMD observations are not used until BMD supplies a documented API. Historical BMD observations remain the training target; historical climatology is never presented as a live observation.
+- The v2 API supports post-2024 timestamps with a leakage-tested NASA-history-to-BMD forecast model trained from scraped OGIMET BMD SYNOP data plus scraped NASA POWER station data. It reports the requested timestamp, latest NASA timestamp, lag, forecast horizon, uncertainty, and per-variable quality status.
+- Exact requested-time BMD observations are scraped from OGIMET SYNOP when available. If unavailable, the API returns model estimates/forecasts and does not fake BMD raw data. Historical climatology is never presented as a live observation.
 - Optional SOTA evaluation uses `requirements-sota.txt`; Chronos-2 resource and holdout results are recorded under `outputs/tables/operational_forecast/` without adding its 1.3 GB process footprint to the production image.
 - Use matching filenames to pair datasets, for example:
 
 ```text
-data/processed/bmd_stations_3hourly/dhaka.csv
+data/processed/ogimet_synop/by_station/dhaka.csv
 data/processed/nasa_station_data/3h_picked/dhaka.csv
 data/processed/nasa_station_data/3h_average/dhaka.csv
 ```

@@ -10,7 +10,7 @@ import pandas as pd
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-BMD_DIR = PROJECT_ROOT / "data" / "processed" / "bmd_stations_3hourly"
+BMD_DIR = PROJECT_ROOT / "data" / "processed" / "ogimet_synop" / "by_station"
 NASA_ROOT = PROJECT_ROOT / "data" / "processed" / "nasa_station_data"
 TABLE_DIR = PROJECT_ROOT / "outputs" / "tables" / "bmd_nasa_comparison"
 REPORT_DIR = PROJECT_ROOT / "outputs" / "reports"
@@ -305,7 +305,7 @@ References are listed at the end of this report.
 
 ## Dataset Alignment
 
-- BMD folder: `data/processed/bmd_stations_3hourly/`
+- BMD folder: `data/processed/ogimet_synop/by_station/`
 - NASA folder: `data/processed/nasa_station_data/{variant}/`
 - Stations: 35
 - Time step: 3-hourly

@@ -519,8 +519,17 @@ def apply_ogimet_observation(
     return True
 
 
+def model_data_sources(*, legacy_data: dict[str, Any] | None = None, model: OperationalForecastModel | None = None) -> dict[str, Any]:
+    legacy = legacy_data or runtime()
+    return {
+        "correction_model": legacy["bundle"].get("data_sources", {}),
+        "operational_forecast_model": model.bundle.get("data_sources", {}) if model is not None else {},
+    }
+
+
 def historical_v2_payload(request: CorrectionRequest) -> dict[str, Any]:
     result = correct(request)
+    legacy_data = runtime()
     estimates: dict[str, Any] = {}
     for variable, estimate in result["estimates"].items():
         corrected = clamp_value(variable, estimate["corrected"])
@@ -573,6 +582,7 @@ def historical_v2_payload(request: CorrectionRequest) -> dict[str, Any]:
         "estimates": estimates,
         "attribution": ["Bangladesh Meteorological Department (BMD)", "NASA POWER"],
         "data_warning": None,
+        "model_data_sources": model_data_sources(legacy_data=legacy_data),
         "bmd_live_enabled": ogimet_client.enabled,
         "bmd_data_status": {
             "kind": "actual_observation",
@@ -873,9 +883,10 @@ def estimate_v2(request: CorrectionRequest) -> dict[str, Any]:
         "estimates": estimates,
         "attribution": [
             "NASA POWER Near Real Time meteorology",
-            "Bangladesh Meteorological Department historical observations (2021-2024)",
+            "OGIMET BMD SYNOP-derived historical observations (2021-2024)",
         ],
         "data_warning": "Provisional forecast - not an observation." if used_forecast else None,
+        "model_data_sources": model_data_sources(legacy_data=legacy_data, model=model),
         "cache_used": cache_used,
         "bmd_live_enabled": ogimet_client.enabled,
         "bmd_data_status": {

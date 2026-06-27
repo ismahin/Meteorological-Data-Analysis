@@ -14,7 +14,7 @@ References are listed at the end of this report.
 
 ## Dataset Alignment
 
-- BMD folder: `data/processed/bmd_stations_3hourly/`
+- BMD folder: `data/processed/ogimet_synop/by_station/`
 - NASA folder: `data/processed/nasa_station_data/3h_picked/`
 - Stations: 35
 - Time step: 3-hourly
