@@ -35,7 +35,8 @@ body {
 }
 
 button,
-input {
+input,
+select {
   font: inherit;
 }
 
@@ -102,16 +103,22 @@ input {
   padding-top: 18px;
 }
 
-.control-form label {
+.control-form label,
+.control-field {
   display: grid;
   gap: 6px;
+}
+
+.control-form label,
+.field-label {
   color: var(--muted);
   font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
 }
 
-.control-form input {
+.control-form input,
+.control-form select {
   width: 100%;
   min-height: 40px;
   border: 1px solid var(--border);
@@ -123,9 +130,39 @@ input {
   outline: none;
 }
 
-.control-form input:focus {
+.control-form input:focus,
+.control-form select:focus {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.18);
+}
+
+.utc-timestamp-group {
+  display: grid;
+  grid-template-columns: 1fr 112px;
+  gap: 9px;
+  align-items: end;
+}
+
+.utc-date-input {
+  color-scheme: light;
+}
+
+.utc-hour-field {
+  display: grid;
+  gap: 4px;
+}
+
+.control-form .utc-hour-field {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.utc-hour-field select {
+  font-size: 14px;
+  font-weight: 800;
 }
 
 .input-help {

@@ -29,7 +29,7 @@ DEFAULT_STATIONS_JSON = env_path(
 )
 DEFAULT_BMD_DIR = env_path(
     "BMD_TIMESERIES_DIR",
-    PROJECT_ROOT / "data" / "processed" / "bmd_stations_3hourly",
+    PROJECT_ROOT / "data" / "processed" / "ogimet_synop" / "by_station",
 )
 DEFAULT_NASA_DIR = env_path(
     "NASA_STATION_TIMESERIES_DIR",

@@ -17,6 +17,7 @@ const BOUNDS = {
   lonMin: 88.0,
   lonMax: 92.8,
 };
+const UTC_HOUR_OPTIONS = ["00", "03", "06", "09", "12", "15", "18", "21"];
 const BANGLADESH_OUTLINE = [
   [26.62, 88.25],
   [26.25, 89.6],
@@ -76,6 +77,18 @@ function bmdSourceLabel(status) {
 
 function toUtcIso(utcInputValue) {
   return `${utcInputValue}:00Z`;
+}
+
+function timestampDatePart(timestampUtc) {
+  return timestampUtc.slice(0, 10);
+}
+
+function timestampHourPart(timestampUtc) {
+  return timestampUtc.slice(11, 13);
+}
+
+function composeUtcTimestamp(dateValue, hourValue) {
+  return `${dateValue}T${hourValue}:00`;
 }
 
 function validateInputs(location, timestampUtc) {
@@ -296,6 +309,14 @@ function App() {
     });
   }
 
+  function updateTimestampDate(dateValue) {
+    setTimestamp((current) => composeUtcTimestamp(dateValue, timestampHourPart(current) || "00"));
+  }
+
+  function updateTimestampHour(hourValue) {
+    setTimestamp((current) => composeUtcTimestamp(timestampDatePart(current), hourValue));
+  }
+
   async function runCorrection(event) {
     event.preventDefault();
     setError("");
@@ -367,17 +388,32 @@ function App() {
               onChange={(event) => setLocation((current) => ({ ...current, longitude: Number(event.target.value) }))}
             />
           </label>
-          <label>
-            Timestamp UTC
-            <input
-              type="datetime-local"
-              min="2021-01-01T00:00"
-              step="10800"
-              value={timestamp}
-              onChange={(event) => setTimestamp(event.target.value)}
-            />
-            <small className="input-help">UTC only. The browser timezone is ignored.</small>
-          </label>
+          <div className="control-field">
+            <span className="field-label">Timestamp UTC</span>
+            <div className="utc-timestamp-group" role="group" aria-label="UTC timestamp selector">
+              <input
+                className="utc-date-input"
+                type="date"
+                min="2021-01-01"
+                value={timestampDatePart(timestamp)}
+                onChange={(event) => updateTimestampDate(event.target.value)}
+                aria-label="UTC date"
+              />
+              <div className="utc-hour-field">
+                <span>UTC hour</span>
+                <select
+                  value={timestampHourPart(timestamp)}
+                  onChange={(event) => updateTimestampHour(event.target.value)}
+                  aria-label="UTC hour"
+                >
+                  {UTC_HOUR_OPTIONS.map((hour) => (
+                    <option key={hour} value={hour}>{hour}:00</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <small className="input-help">UTC only. Use 24-hour UTC steps; no AM/PM or browser timezone conversion.</small>
+          </div>
 
           <div className="variables">
             {VARIABLES.map((item) => (
