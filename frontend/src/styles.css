@@ -128,6 +128,14 @@ input {
   box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.18);
 }
 
+.input-help {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.35;
+  text-transform: none;
+}
+
 .variables {
   display: grid;
   grid-template-columns: 1fr 1fr;

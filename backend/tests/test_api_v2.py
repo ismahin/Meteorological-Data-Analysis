@@ -13,9 +13,16 @@ sys.path.insert(0, str(BACKEND_ROOT))
 
 from app import main
 from app.nasa_power import NasaPowerError
+from app.ogimet_synop import StationObservation
 
 
 client = TestClient(main.app)
+
+
+@pytest.fixture(autouse=True)
+def disable_live_ogimet_in_api_tests(monkeypatch):
+    monkeypatch.setattr(main.ogimet_client, "enabled", True)
+    monkeypatch.setattr(main.ogimet_client, "fetch_station_observation", lambda *_args, **_kwargs: None)
 
 
 def nasa_history(end: str) -> pd.DataFrame:
@@ -87,6 +94,47 @@ def test_exact_nasa_timestamp_uses_correction_without_forecast(monkeypatch):
     assert payload["estimates"]["T2M"]["requested"]["corrected_nasa"] is not None
     assert payload["estimates"]["T2M"]["requested"]["correction_model_version"] == "bias-correction-v1"
     assert payload["estimates"]["T2M"]["requested"]["bmd_raw"] is None
+
+
+def test_non_utc_offset_is_rejected():
+    response = client.post("/api/v2/estimate", json=request("2026-06-24T12:00:00+06:00", ["T2M"]))
+    assert response.status_code == 422
+    assert "must be UTC" in response.text
+
+
+def test_requested_ogimet_bmd_observation_is_exposed_separately(monkeypatch):
+    monkeypatch.setattr(main, "utc_now_3hour", lambda: pd.Timestamp("2026-06-27 00:00"))
+    monkeypatch.setattr(
+        main.nasa_client,
+        "fetch_history",
+        lambda *_args, **_kwargs: (nasa_history("2026-06-25 21:00"), False),
+    )
+    monkeypatch.setattr(
+        main.ogimet_client,
+        "fetch_station_observation",
+        lambda station_id, timestamp: StationObservation(
+            station_id=station_id,
+            wmo_id="41923",
+            timestamp_utc=pd.Timestamp(timestamp),
+            values={"T2M": 28.0, "RH2M": 88.0, "PRECTOTCORR": 0.0, "WS10M": 0.0},
+            raw_report="AAXX 27004 41923 32980 00000 10280 20260 30039 40046=",
+            source_url="https://www.ogimet.com/cgi-bin/getsynop?begin=202606270000",
+        ),
+    )
+    response = client.post("/api/v2/estimate", json=request("2026-06-27T00:00:00Z", ["T2M"]))
+    assert response.status_code == 200
+    payload = response.json()
+    requested = payload["estimates"]["T2M"]["requested"]
+    assert payload["bmd_live_enabled"] is True
+    assert payload["bmd_data_status"]["source"] == "OGIMET_SYNOP_BMD_raw"
+    assert payload["bmd_data_status"]["observation_available"] is True
+    assert requested["bmd_actual"] == 28.0
+    assert requested["bmd_raw"] == 28.0
+    assert requested["bmd_source"] == "OGIMET_SYNOP_BMD_raw"
+    assert requested["bmd_wmo_id"] == "41923"
+    assert requested["bmd_forecast"] is not None
+    assert requested["nasa_forecast"] is not None
+    assert requested["corrected_nasa"] is not None
 
 
 def test_station_marker_uses_exact_operational_bmd_anchor(monkeypatch):

@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import math
 import os
+import re
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -93,7 +94,10 @@ def season_code(month: int) -> int:
 
 
 def parse_timestamp_utc(value: str) -> pd.Timestamp:
-    text = value.strip().replace("Z", "+00:00")
+    text = value.strip()
+    if re.search(r"([+-]\d{2}:?\d{2})$", text) and not re.search(r"(\+00:?00)$", text):
+        raise ValueError("timestamp_utc must be UTC. Use a Z suffix, +00:00 offset, or no offset for UTC input.")
+    text = text.replace("Z", "+00:00")
     dt = datetime.fromisoformat(text)
     if dt.tzinfo is None:
         dt = dt.replace(tzinfo=timezone.utc)

@@ -68,22 +68,23 @@ function sourceLabel(estimate) {
 }
 
 function bmdSourceLabel(status) {
+  if (status?.observation_available && status?.source === "OGIMET_SYNOP_BMD_raw") return "Actual BMD SYNOP from OGIMET";
   if (status?.observation_available) return "Actual archived BMD observation";
   if (status?.kind === "model_forecast") return "BMD model forecast (no live observation)";
   return "BMD model estimate (no live observation)";
 }
 
-function toUtcIso(localValue) {
-  return `${localValue}:00Z`;
+function toUtcIso(utcInputValue) {
+  return `${utcInputValue}:00Z`;
 }
 
-function validateInputs(location, timestampLocal) {
-  const hour = Number(timestampLocal.slice(11, 13));
-  const minute = Number(timestampLocal.slice(14, 16));
-  if (!timestampLocal || !Number.isFinite(hour) || hour % 3 !== 0 || minute !== 0) {
+function validateInputs(location, timestampUtc) {
+  const hour = Number(timestampUtc.slice(11, 13));
+  const minute = Number(timestampUtc.slice(14, 16));
+  if (!timestampUtc || !Number.isFinite(hour) || hour % 3 !== 0 || minute !== 0) {
     return "Timestamp must use a 3-hour UTC step: 00, 03, 06, 09, 12, 15, 18, or 21.";
   }
-  if (timestampLocal < "2021-01-01T00") {
+  if (timestampUtc < "2021-01-01T00") {
     return "Timestamp must be on or after 2021-01-01 00:00 UTC.";
   }
   if (
@@ -175,6 +176,10 @@ function ResultBlock({ variable, estimate }) {
   const showLatest = latest && latest.timestamp_utc !== requested?.timestamp_utc;
   const isForecast = requested?.classification === "provisional_forecast";
   const isHistorical = requested?.classification === "historical_correction";
+  const hasBmdObservation = requested?.bmd_observation_available && requested?.bmd_actual !== null;
+  const bmdActualLabel = requested?.bmd_source === "OGIMET_SYNOP_BMD_raw"
+    ? "BMD actual (OGIMET SYNOP)"
+    : "BMD actual (nearest station)";
   return (
     <section className={`result-block ${unavailable ? "is-unavailable" : ""}`}>
       <header>
@@ -191,7 +196,17 @@ function ResultBlock({ variable, estimate }) {
         </div>
       ) : (
         <>
-          {isForecast ? (
+          {hasBmdObservation ? (
+            <>
+              <MetricRow label={bmdActualLabel} value={formatNumber(requested.bmd_actual ?? requested.bmd_raw)} unit={meta?.unit} />
+              <MetricRow
+                label={isForecast ? "NASA forecast (raw)" : "NASA raw"}
+                value={formatNumber((isForecast ? requested.nasa_forecast : requested.nasa_raw) ?? requested.raw_forecast)}
+                unit={meta?.unit}
+              />
+              <MetricRow label="Corrected value" value={formatNumber(requested.corrected_nasa ?? requested.bmd_equivalent)} unit={meta?.unit} />
+            </>
+          ) : isForecast ? (
             <>
               <MetricRow label="BMD forecast (model)" value={formatNumber(requested.bmd_forecast ?? requested.bmd_equivalent)} unit={meta?.unit} />
               <MetricRow label="NASA forecast (raw)" value={formatNumber(requested.nasa_forecast ?? requested.raw_forecast)} unit={meta?.unit} />
@@ -240,6 +255,7 @@ function ResultBlock({ variable, estimate }) {
           <strong>{formatTimestamp(latest.timestamp_utc)}</strong>
           <small>
             NASA raw {formatNumber(latest.nasa_raw ?? latest.raw_forecast)} {meta?.unit}
+            {latest.bmd_actual !== null ? ` · BMD actual ${formatNumber(latest.bmd_actual)} ${meta?.unit}` : ""}
             {latest.bmd_estimate !== null ? ` · NASA corrected using BMD ${formatNumber(latest.corrected_nasa ?? latest.bmd_estimate)} ${meta?.unit}` : ""}
           </small>
         </div>
@@ -360,6 +376,7 @@ function App() {
               value={timestamp}
               onChange={(event) => setTimestamp(event.target.value)}
             />
+            <small className="input-help">UTC only. The browser timezone is ignored.</small>
           </label>
 
           <div className="variables">
@@ -467,6 +484,7 @@ function App() {
               <span>{result.mode === "provisional_forecast" ? "Forecast status" : "Data status"}</span>
               <h2>{result.nearest_station.station_name}</h2>
               <p>Nearest BMD reference station · {formatNumber(result.nearest_station.distance_km, 1)} km</p>
+              {result.nearest_station.wmo_id ? <p>Nearest WMO ID: {result.nearest_station.wmo_id}</p> : null}
               <p>Latest NASA: {formatTimestamp(result.latest_nasa_timestamp_utc)}</p>
               <p>NASA lag: {formatNumber(result.nasa_data_lag_hours, 1)} hours</p>
               <p>BMD source: {bmdSourceLabel(result.bmd_data_status)}</p>

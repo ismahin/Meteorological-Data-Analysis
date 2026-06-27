@@ -57,7 +57,7 @@ BACKEND_CORS_ORIGINS=https://meteorological-data-analysis.vercel.app
 
 - `GET /api/health`
 - `GET /api/stations`
-- `POST /api/v2/estimate` - historical correction or NASA-only provisional forecast
+- `POST /api/v2/estimate` - historical correction, NASA provisional forecast, and optional OGIMET BMD SYNOP observation lookup
 - `POST /api/correct` - deprecated, historical requests through 2024 only
 
 `POST /api/v2/estimate` request:
@@ -71,19 +71,32 @@ BACKEND_CORS_ORIGINS=https://meteorological-data-analysis.vercel.app
 }
 ```
 
-For post-2024 requests the API fetches one 90-day NASA POWER range. If the requested
-3-hour timestamp is missing, the packaged model forecasts directly from the latest
-NASA timestamp. Temperature, humidity, rainfall, and wind are independently gated by
-held-out BMD validation. A failed gate is returned as unavailable; climatology is never
-presented as a live observation.
+All timestamps are UTC. The frontend treats the `datetime-local` field as a UTC value
+and sends it with a `Z` suffix. The backend rejects non-UTC offsets such as `+06:00`
+instead of silently converting them.
+
+For post-2024 requests the API fetches one 90-day NASA POWER UTC range. If the
+requested 3-hour timestamp is missing, the packaged model forecasts directly from the
+latest NASA timestamp. Temperature, humidity, rainfall, and wind are independently
+gated by held-out BMD validation. A failed gate is returned as unavailable; climatology
+is never presented as a live observation.
+
+When the requested UTC timestamp is not in the future, the API also queries OGIMET
+`getsynop` for Bangladesh SYNOP rows at the exact UTC hour. If the nearest BMD station
+has a valid SYNOP row, the response exposes that value separately as `bmd_raw` and
+`bmd_actual`, includes the WMO id and raw SYNOP report, and keeps `corrected_nasa`
+separate. If OGIMET has no row or is unavailable, the API does not fake BMD raw data;
+it falls back to the model-only BMD estimate/forecast fields.
 
 Available estimate payloads expose provider-specific fields instead of an ambiguous
 combined label:
 
 - Provisional mode: raw `nasa_forecast` plus the BMD-scale `bmd_forecast`/`corrected_nasa`.
+  If OGIMET has the exact requested UTC SYNOP row, `bmd_actual`/`bmd_raw` are also set
+  and remain distinct from the model forecast and corrected value.
 - Historical mode: `nasa_raw`, nearest-station `bmd_actual`/`bmd_raw`, and `corrected_nasa`.
-- Exact post-2024 NASA mode: `nasa_raw` and `bmd_estimate`; `bmd_raw` remains null
-  because no documented live BMD API is available.
+- Exact post-2024 NASA mode: `nasa_raw` and `bmd_estimate`; `bmd_raw` is set only when
+  OGIMET provides the exact nearest-station SYNOP row.
 
 `bmd_forecast` is produced by the operational forecast bundle. `corrected_nasa` is
 calculated separately with the original `bias-correction-v1` bundle and its selected

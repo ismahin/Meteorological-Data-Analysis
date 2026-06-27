@@ -8,7 +8,11 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     OPERATIONAL_MODEL_PATH=/app/models/operational_forecast/model_bundle.joblib \
     BMD_STATIONS_JSON=/app/data/processed/bmd_station_coordinates_35.json \
     BMD_TIMESERIES_DIR=/app/data/processed/bmd_stations_3hourly \
-    NASA_STATION_TIMESERIES_DIR=/app/data/processed/nasa_station_data/3h_picked
+    NASA_STATION_TIMESERIES_DIR=/app/data/processed/nasa_station_data/3h_picked \
+    BMD_OGIMET_ENABLED=true \
+    BMD_OGIMET_CACHE_TTL_SECONDS=600 \
+    BMD_OGIMET_TIMEOUT_SECONDS=20 \
+    BMD_OGIMET_RETRIES=1
 
 WORKDIR /app
 

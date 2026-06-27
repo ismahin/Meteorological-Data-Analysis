@@ -11,7 +11,10 @@ services:
       BMD_TIMESERIES_DIR: /app/data/processed/bmd_stations_3hourly
       NASA_STATION_TIMESERIES_DIR: /app/data/processed/nasa_station_data/3h_picked
       OPERATIONAL_MODEL_PATH: /app/models/operational_forecast/model_bundle.joblib
-      BMD_LIVE_ENABLED: "false"
+      BMD_OGIMET_ENABLED: ${BMD_OGIMET_ENABLED:-true}
+      BMD_OGIMET_CACHE_TTL_SECONDS: ${BMD_OGIMET_CACHE_TTL_SECONDS:-600}
+      BMD_OGIMET_TIMEOUT_SECONDS: ${BMD_OGIMET_TIMEOUT_SECONDS:-20}
+      BMD_OGIMET_RETRIES: ${BMD_OGIMET_RETRIES:-1}
     ports:
       - "127.0.0.1:8000:8000"
     restart: unless-stopped

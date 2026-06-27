@@ -35,6 +35,7 @@ from .bias_correction_core import (
     validate_bangladesh_coordinate,
 )
 from .nasa_power import NasaPowerClient, NasaPowerError, utc_now_3hour
+from .ogimet_synop import OgimetSynopClient, StationObservation, STATION_ID_TO_WMO
 from .operational_forecast import (
     MAX_FORECAST_HOURS,
     OperationalForecastModel,
@@ -62,6 +63,12 @@ nasa_client = NasaPowerClient(
     stale_ttl_seconds=int(os.getenv("NASA_STALE_CACHE_SECONDS", "86400")),
     timeout_seconds=int(os.getenv("NASA_TIMEOUT_SECONDS", "45")),
     retries=int(os.getenv("NASA_RETRIES", "2")),
+)
+ogimet_client = OgimetSynopClient(
+    enabled=os.getenv("BMD_OGIMET_ENABLED", "true").lower() in {"1", "true", "yes", "on"},
+    cache_ttl_seconds=int(os.getenv("BMD_OGIMET_CACHE_TTL_SECONDS", "600")),
+    timeout_seconds=int(os.getenv("BMD_OGIMET_TIMEOUT_SECONDS", "20")),
+    retries=int(os.getenv("BMD_OGIMET_RETRIES", "1")),
 )
 
 
@@ -488,6 +495,30 @@ def operational_payload(
     return payload
 
 
+def apply_ogimet_observation(
+    payload: dict[str, Any],
+    *,
+    variable: str,
+    observation: StationObservation | None,
+) -> bool:
+    if observation is None:
+        return False
+    value = observation.values.get(variable)
+    if value is None or pd.isna(value):
+        return False
+    actual = clamp_variable(variable, float(value))
+    payload["bmd_raw"] = actual
+    payload["bmd_actual"] = actual
+    payload["bmd_observation_available"] = True
+    payload["bmd_data_kind"] = "actual_observation"
+    payload["bmd_source"] = "OGIMET_SYNOP_BMD_raw"
+    payload["bmd_data_timestamp_utc"] = iso_utc(observation.timestamp_utc)
+    payload["bmd_wmo_id"] = observation.wmo_id
+    payload["bmd_synop_raw"] = observation.raw_report
+    payload["bmd_synop_source_url"] = observation.source_url
+    return True
+
+
 def historical_v2_payload(request: CorrectionRequest) -> dict[str, Any]:
     result = correct(request)
     estimates: dict[str, Any] = {}
@@ -542,7 +573,7 @@ def historical_v2_payload(request: CorrectionRequest) -> dict[str, Any]:
         "estimates": estimates,
         "attribution": ["Bangladesh Meteorological Department (BMD)", "NASA POWER"],
         "data_warning": None,
-        "bmd_live_enabled": False,
+        "bmd_live_enabled": ogimet_client.enabled,
         "bmd_data_status": {
             "kind": "actual_observation",
             "observation_available": True,
@@ -556,8 +587,11 @@ def historical_v2_payload(request: CorrectionRequest) -> dict[str, Any]:
 
 @app.post("/api/v2/estimate")
 def estimate_v2(request: CorrectionRequest) -> dict[str, Any]:
-    validate_bangladesh_coordinate(request.latitude, request.longitude)
-    requested_timestamp = parse_timestamp_utc(request.timestamp_utc)
+    try:
+        validate_bangladesh_coordinate(request.latitude, request.longitude)
+        requested_timestamp = parse_timestamp_utc(request.timestamp_utc)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     unknown = sorted(set(request.variables) - set(VARIABLES))
     if unknown:
         raise HTTPException(status_code=422, detail=f"Unsupported variables: {', '.join(unknown)}")
@@ -587,6 +621,18 @@ def estimate_v2(request: CorrectionRequest) -> dict[str, Any]:
     legacy_data = runtime()
     station_list = legacy_data["stations"]
     nearest = nearest_stations(request.latitude, request.longitude, station_list, k=1)[0]
+    nearest_station = nearest[0]
+    requested_ogimet_observation: StationObservation | None = None
+    latest_ogimet_observations: dict[pd.Timestamp, StationObservation | None] = {}
+    ogimet_error: str | None = None
+    if requested_timestamp <= now_step:
+        try:
+            requested_ogimet_observation = ogimet_client.fetch_station_observation(
+                nearest_station.station_id,
+                requested_timestamp,
+            )
+        except Exception as exc:
+            ogimet_error = str(exc)
     correction_anchor_cache: dict[pd.Timestamp, list[tuple[Station, float, pd.Series]]] = {}
     operational_correction_anchor_cache: dict[
         tuple[pd.Timestamp, pd.Timestamp, str],
@@ -624,6 +670,7 @@ def estimate_v2(request: CorrectionRequest) -> dict[str, Any]:
     horizons: list[float] = []
     latest_timestamps: list[pd.Timestamp] = []
     available_count = 0
+    bmd_observation_count = 0
     used_forecast = False
 
     for variable in variables:
@@ -660,6 +707,17 @@ def estimate_v2(request: CorrectionRequest) -> dict[str, Any]:
 
         latest_timestamp = pd.Timestamp(valid_series.index[-1])
         latest_timestamps.append(latest_timestamp)
+        latest_ogimet_observation = latest_ogimet_observations.get(latest_timestamp)
+        if latest_timestamp not in latest_ogimet_observations and latest_timestamp <= now_step:
+            try:
+                latest_ogimet_observation = ogimet_client.fetch_station_observation(
+                    nearest_station.station_id,
+                    latest_timestamp,
+                )
+            except Exception as exc:
+                ogimet_error = ogimet_error or str(exc)
+                latest_ogimet_observation = None
+            latest_ogimet_observations[latest_timestamp] = latest_ogimet_observation
         latest_features = build_forecast_features(
             history.loc[:latest_timestamp],
             origin=latest_timestamp,
@@ -677,6 +735,11 @@ def estimate_v2(request: CorrectionRequest) -> dict[str, Any]:
             raw_override=float(valid_series.iloc[-1]),
         )
         if latest_payload["status"] == "available":
+            apply_ogimet_observation(
+                latest_payload,
+                variable=variable,
+                observation=latest_ogimet_observation,
+            )
             apply_previous_correction(
                 latest_payload,
                 previous_model_correction(
@@ -756,6 +819,12 @@ def estimate_v2(request: CorrectionRequest) -> dict[str, Any]:
                     classification="provisional_forecast",
                 )
         if requested_payload["status"] == "available":
+            if apply_ogimet_observation(
+                requested_payload,
+                variable=variable,
+                observation=requested_ogimet_observation,
+            ):
+                bmd_observation_count += 1
             apply_previous_correction(
                 requested_payload,
                 previous_model_correction(
@@ -796,6 +865,7 @@ def estimate_v2(request: CorrectionRequest) -> dict[str, Any]:
         "nearest_station": {
             "station_id": nearest[0].station_id,
             "station_name": nearest[0].station_name,
+            "wmo_id": STATION_ID_TO_WMO.get(nearest[0].station_id),
             "latitude": nearest[0].latitude,
             "longitude": nearest[0].longitude,
             "distance_km": nearest[1],
@@ -807,13 +877,20 @@ def estimate_v2(request: CorrectionRequest) -> dict[str, Any]:
         ],
         "data_warning": "Provisional forecast - not an observation." if used_forecast else None,
         "cache_used": cache_used,
-        "bmd_live_enabled": False,
+        "bmd_live_enabled": ogimet_client.enabled,
         "bmd_data_status": {
-            "kind": "model_forecast" if used_forecast else "model_estimate",
-            "observation_available": False,
-            "source": "NASA_BMD_operational_model",
+            "kind": "actual_observation" if bmd_observation_count else "model_forecast" if used_forecast else "model_estimate",
+            "observation_available": bool(bmd_observation_count),
+            "source": "OGIMET_SYNOP_BMD_raw" if bmd_observation_count else "NASA_BMD_operational_model",
             "archive_start_utc": iso_utc(START_DATE),
             "archive_end_utc": iso_utc(TRAINING_END_DATE),
-            "reason": "requested_timestamp_is_outside_local_bmd_observation_archive",
+            "nearest_station_wmo_id": STATION_ID_TO_WMO.get(nearest[0].station_id),
+            "requested_observation_timestamp_utc": iso_utc(requested_ogimet_observation.timestamp_utc)
+            if requested_ogimet_observation is not None
+            else None,
+            "ogimet_error": ogimet_error,
+            "reason": None
+            if bmd_observation_count
+            else "requested_timestamp_is_outside_local_bmd_observation_archive_or_ogimet_missing",
         },
     }
